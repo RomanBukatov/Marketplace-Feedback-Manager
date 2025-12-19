@@ -14,8 +14,9 @@ builder.Services.Configure<ApiKeys>(builder.Configuration.GetSection("ApiKeys"))
 builder.Services.Configure<WorkerSettings>(builder.Configuration.GetSection("WorkerSettings"));
 
 // 1.5. База данных (SQLite)
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=marketplace.db";
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite("Data Source=marketplace.db"));
+    options.UseSqlite(connectionString));
 
 // 2. Регистрация HTTP клиентов
 builder.Services.AddHttpClient<IWildberriesApiClient, WildberriesApiClient>();
@@ -57,20 +58,42 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// 6. CORS (Чтобы фронтенд мог делать запросы)
+// 6. CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend",
         policy =>
         {
-            policy.WithOrigins("http://localhost:5173") // Адрес Vite по умолчанию
-                  .AllowAnyHeader()
-                  .AllowAnyMethod()
-                  .AllowCredentials(); // ВОТ ЭТО ВАЖНО
+            policy.WithOrigins(
+                "http://localhost:5173", // Для разработки (npm run dev)
+                "http://localhost"       // Для Докера (nginx)
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
         });
 });
 
 var app = builder.Build();
+
+// --- АВТО-МИГРАЦИЯ БАЗЫ ДАННЫХ ---
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        // Эта команда применит все миграции и создаст базу, если её нет
+        context.Database.Migrate();
+        Console.WriteLine("✅ База данных успешно обновлена (Migrate).");
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "❌ Ошибка при создании/обновлении базы данных.");
+    }
+}
+// ----------------------------------
 
 // --- Pipeline ---
 

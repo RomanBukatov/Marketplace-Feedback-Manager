@@ -1,0 +1,26 @@
+# 1. Сборка (Build)
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Копируем проект и восстанавливаем зависимости
+COPY ["backend/Marketplace.API/Marketplace.API.csproj", "backend/Marketplace.API/"]
+RUN dotnet restore "backend/Marketplace.API/Marketplace.API.csproj"
+
+# Копируем остальной код и собираем
+COPY . .
+WORKDIR "/src/backend/Marketplace.API"
+RUN dotnet publish "Marketplace.API.csproj" -c Release -o /app/publish /p:UseAppHost=false
+
+# 2. Запуск (Runtime)
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+WORKDIR /app
+EXPOSE 8080
+
+# Копируем собранное приложение
+COPY --from=build /app/publish .
+
+# Создаем папку для Базы Данных и даем права (важно для Linux)
+RUN mkdir -p /app/data && chmod 777 /app/data
+
+# Точка входа
+ENTRYPOINT ["dotnet", "Marketplace.API.dll"]
