@@ -63,10 +63,17 @@ const SettingsPage: React.FC = () => {
     try {
       setLoading(true);
       const parsed = JSON.parse(rawJson);
+
+      // ЗАЩИТА: Строгая блокировка
+      if (parsed.Auth || parsed.auth) {
+        message.error('БЛОКИРОВКА: Изменение пароля через JSON запрещено! Используйте кнопку "Сменить пароль".');
+        return; // <--- ПРЕРЫВАЕМ СОХРАНЕНИЕ
+      }
+
       await settingsService.update(parsed);
 
-      // Обновляем визуал
       form.setFieldsValue(parsed);
+      setRawJson(JSON.stringify(parsed, null, 2));
       message.success('JSON сохранен!');
     } catch (error) {
       message.error('Ошибка синтаксиса JSON');

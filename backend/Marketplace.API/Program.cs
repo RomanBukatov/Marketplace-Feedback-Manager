@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Marketplace.API;
 using Marketplace.API.Services;
-using OpenAI.Extensions;
 using Marketplace.API.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Marketplace.API.Data;
@@ -23,11 +22,6 @@ builder.Services.AddHttpClient<IWildberriesApiClient, WildberriesApiClient>();
 builder.Services.AddHttpClient<IOzonApiClient, OzonApiClient>();
 
 // 3. Регистрация OpenAI
-builder.Services.AddOpenAIService(settings =>
-{
-    settings.ApiKey = builder.Configuration["ApiKeys:OpenAI"] ??
-                      throw new InvalidOperationException("OpenAI API key is not configured.");
-});
 builder.Services.AddTransient<IOpenAiClient, OpenAiClient>();
 builder.Services.AddScoped<IFeedbackService, FeedbackService>();
 

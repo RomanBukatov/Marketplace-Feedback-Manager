@@ -35,7 +35,29 @@ namespace Marketplace.API.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            var adminPassword = _configuration["Auth:AdminPassword"];
+            // ЧИТАЕМ ПАРОЛЬ НАПРЯМУЮ ИЗ ФАЙЛА (чтобы он был свежим)
+            string adminPassword = "";
+            try
+            {
+                var configPath = Path.Combine(_env.ContentRootPath, "appsettings.json");
+                if (System.IO.File.Exists(configPath))
+                {
+                    var json = await System.IO.File.ReadAllTextAsync(configPath);
+                    var jsonObj = System.Text.Json.Nodes.JsonNode.Parse(json);
+                    adminPassword = jsonObj?["Auth"]?["AdminPassword"]?.ToString() ?? "";
+                }
+            }
+            catch
+            {
+                // Если не удалось прочитать файл, пробуем взять из памяти (резерв)
+                adminPassword = _configuration["Auth:AdminPassword"] ?? "";
+            }
+
+            // Если пароль в конфиге пустой или не найден - запрещаем вход
+            if (string.IsNullOrEmpty(adminPassword))
+            {
+                return Unauthorized(new { message = "Ошибка конфигурации: Пароль не задан." });
+            }
 
             if (request.Password != adminPassword)
             {
@@ -52,8 +74,8 @@ namespace Marketplace.API.Controllers
             var authProperties = new AuthenticationProperties { IsPersistent = true };
 
             await HttpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme, 
-                new ClaimsPrincipal(claimsIdentity), 
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(claimsIdentity),
                 authProperties);
 
             return Ok(new { message = "Успешный вход" });

@@ -17,31 +17,28 @@ namespace Marketplace.API.Controllers
             _context = context;
         }
 
-        // GET: api/dashboard/stats
         [HttpGet("stats")]
         public async Task<IActionResult> GetStats()
         {
             var today = DateTime.UtcNow.Date;
             
-            // Получаем то, что есть в базе
-            var dbStats = await _context.FeedbackLogs
+            var stats = await _context.FeedbackLogs
                 .Where(x => x.ProcessedAt >= today)
                 .GroupBy(x => x.Marketplace)
                 .Select(g => new { Marketplace = g.Key, Count = g.Count() })
                 .ToListAsync();
 
-            // Формируем жесткий список, чтобы всегда были оба магазина
             var result = new List<object>
             {
                 new
                 {
                     Marketplace = "Wildberries",
-                    Count = dbStats.FirstOrDefault(s => s.Marketplace == "Wildberries")?.Count ?? 0
+                    Count = stats.FirstOrDefault(s => s.Marketplace == "Wildberries")?.Count ?? 0
                 },
                 new
                 {
                     Marketplace = "Ozon",
-                    Count = dbStats.FirstOrDefault(s => s.Marketplace == "Ozon")?.Count ?? 0
+                    Count = stats.FirstOrDefault(s => s.Marketplace == "Ozon")?.Count ?? 0
                 }
             };
 
