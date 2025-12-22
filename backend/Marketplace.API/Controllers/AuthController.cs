@@ -101,39 +101,52 @@ namespace Marketplace.API.Controllers
         [HttpPost("change-password")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
         {
-            var currentPassword = _configuration["Auth:AdminPassword"];
+            var configPath = Path.Combine(_env.ContentRootPath, "appsettings.json");
+            string currentRealPassword = "";
 
-            // 1. Проверяем старый пароль
-            if (request.OldPassword != currentPassword)
+            // 1. Читаем АКТУАЛЬНЫЙ пароль с диска (а не из памяти)
+            try 
+            {
+                if (System.IO.File.Exists(configPath))
+                {
+                    var json = await System.IO.File.ReadAllTextAsync(configPath);
+                    var jsonObj = System.Text.Json.Nodes.JsonNode.Parse(json);
+                    currentRealPassword = jsonObj?["Auth"]?["AdminPassword"]?.ToString() ?? "";
+                }
+            }
+            catch 
+            {
+                // Если файл не читается, берем из памяти (как запасной вариант)
+                currentRealPassword = _configuration["Auth:AdminPassword"] ?? "";
+            }
+
+            // 2. Проверяем старый пароль
+            if (request.OldPassword != currentRealPassword)
             {
                 return BadRequest(new { message = "Старый пароль введен неверно" });
             }
 
-            // 2. Читаем файл настроек
-            var configPath = Path.Combine(_env.ContentRootPath, "appsettings.json");
-            var json = await System.IO.File.ReadAllTextAsync(configPath);
+            // 3. Если ок - обновляем файл
+            var fullJson = await System.IO.File.ReadAllTextAsync(configPath);
+            var node = System.Text.Json.Nodes.JsonNode.Parse(fullJson);
 
-            // 3. Обновляем JSON (используем System.Text.Json.Nodes)
-            var jsonObj = JsonNode.Parse(json);
-
-            if (jsonObj?["Auth"] is JsonObject authSection)
+            if (node?["Auth"] is System.Text.Json.Nodes.JsonObject authSection)
             {
                 authSection["AdminPassword"] = request.NewPassword;
             }
             else
             {
-                 // Если секции нет, создаем (на всякий случай)
-                 jsonObj!["Auth"] = new JsonObject
+                 node!["Auth"] = new System.Text.Json.Nodes.JsonObject
                  {
                      ["AdminPassword"] = request.NewPassword
                  };
             }
 
-            // 4. Сохраняем файл
             var options = new System.Text.Json.JsonSerializerOptions { WriteIndented = true };
-            await System.IO.File.WriteAllTextAsync(configPath, jsonObj.ToJsonString(options));
+            await System.IO.File.WriteAllTextAsync(configPath, node.ToJsonString(options));
 
             return Ok(new { message = "Пароль успешно изменен. Пожалуйста, перезайдите." });
+        }
         }
     }
 }

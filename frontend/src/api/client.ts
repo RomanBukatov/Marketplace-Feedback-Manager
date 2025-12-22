@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Адрес бэкенда (если порт другой - поменяй тут)
-const API_URL = 'http://localhost:5035/api';
+const API_URL = '/api';
 
 export const apiClient = axios.create({
   baseURL: API_URL,

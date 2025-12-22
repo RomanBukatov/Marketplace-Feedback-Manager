@@ -58,13 +58,10 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend",
         policy =>
         {
-            policy.WithOrigins(
-                "http://localhost:5173", // Для разработки (npm run dev)
-                "http://localhost"       // Для Докера (nginx)
-            )
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials();
+            policy.SetIsOriginAllowed(origin => true) // <--- РАЗРЕШАЕМ ВСЕ ИСТОЧНИКИ
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
         });
 });
 
