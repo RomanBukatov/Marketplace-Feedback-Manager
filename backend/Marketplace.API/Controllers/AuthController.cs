@@ -37,7 +37,7 @@ namespace Marketplace.API.Controllers
         {
             // ЧИТАЕМ ПАРОЛЬ НАПРЯМУЮ ИЗ ФАЙЛА (чтобы он был свежим)
             string adminPassword = "";
-            try
+            try 
             {
                 var configPath = Path.Combine(_env.ContentRootPath, "appsettings.json");
                 if (System.IO.File.Exists(configPath))
@@ -47,13 +47,12 @@ namespace Marketplace.API.Controllers
                     adminPassword = jsonObj?["Auth"]?["AdminPassword"]?.ToString() ?? "";
                 }
             }
-            catch
+            catch 
             {
                 // Если не удалось прочитать файл, пробуем взять из памяти (резерв)
                 adminPassword = _configuration["Auth:AdminPassword"] ?? "";
             }
 
-            // Если пароль в конфиге пустой или не найден - запрещаем вход
             if (string.IsNullOrEmpty(adminPassword))
             {
                 return Unauthorized(new { message = "Ошибка конфигурации: Пароль не задан." });
@@ -74,8 +73,8 @@ namespace Marketplace.API.Controllers
             var authProperties = new AuthenticationProperties { IsPersistent = true };
 
             await HttpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
-                new ClaimsPrincipal(claimsIdentity),
+                CookieAuthenticationDefaults.AuthenticationScheme, 
+                new ClaimsPrincipal(claimsIdentity), 
                 authProperties);
 
             return Ok(new { message = "Успешный вход" });
@@ -104,7 +103,7 @@ namespace Marketplace.API.Controllers
             var configPath = Path.Combine(_env.ContentRootPath, "appsettings.json");
             string currentRealPassword = "";
 
-            // 1. Читаем АКТУАЛЬНЫЙ пароль с диска (а не из памяти)
+            // 1. Читаем АКТУАЛЬНЫЙ пароль с диска
             try 
             {
                 if (System.IO.File.Exists(configPath))
@@ -116,7 +115,6 @@ namespace Marketplace.API.Controllers
             }
             catch 
             {
-                // Если файл не читается, берем из памяти (как запасной вариант)
                 currentRealPassword = _configuration["Auth:AdminPassword"] ?? "";
             }
 
@@ -126,7 +124,7 @@ namespace Marketplace.API.Controllers
                 return BadRequest(new { message = "Старый пароль введен неверно" });
             }
 
-            // 3. Если ок - обновляем файл
+            // 3. Обновляем файл
             var fullJson = await System.IO.File.ReadAllTextAsync(configPath);
             var node = System.Text.Json.Nodes.JsonNode.Parse(fullJson);
 
@@ -136,17 +134,20 @@ namespace Marketplace.API.Controllers
             }
             else
             {
-                 node!["Auth"] = new System.Text.Json.Nodes.JsonObject
+                 // Если секции нет - создаем
+                 if (node != null)
                  {
-                     ["AdminPassword"] = request.NewPassword
-                 };
+                    node["Auth"] = new System.Text.Json.Nodes.JsonObject
+                    {
+                        ["AdminPassword"] = request.NewPassword
+                    };
+                 }
             }
 
             var options = new System.Text.Json.JsonSerializerOptions { WriteIndented = true };
-            await System.IO.File.WriteAllTextAsync(configPath, node.ToJsonString(options));
+            await System.IO.File.WriteAllTextAsync(configPath, node?.ToJsonString(options));
 
             return Ok(new { message = "Пароль успешно изменен. Пожалуйста, перезайдите." });
-        }
         }
     }
 }
