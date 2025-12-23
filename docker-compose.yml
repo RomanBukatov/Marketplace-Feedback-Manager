@@ -18,12 +18,15 @@ services:
       - ConnectionStrings__DefaultConnection=Data Source=/app/data/marketplace.db
 
   frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend
-    container_name: marketplace-frontend
-    restart: unless-stopped
-    ports:
-      - "80:80" # Сайт будет доступен на 80 порту (просто http://localhost)
-    depends_on:
-      - backend
+      build:
+        context: .
+        dockerfile: Dockerfile.frontend
+      container_name: marketplace-frontend
+      restart: unless-stopped
+      ports:
+        - "80:80"
+        - "443:443"
+      volumes:
+        - /etc/letsencrypt:/etc/letsencrypt:ro
+      depends_on:
+        - backend
