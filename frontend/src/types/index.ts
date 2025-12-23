@@ -25,8 +25,12 @@ export interface OzonAccount {
   ApiKey: string;
 }
 
+export interface WbAccount {
+  Token: string;
+}
+
 export interface ApiKeys {
-  Wildberries: string;
+  WildberriesAccounts: WbAccount[];
   OpenAI: string;
   OzonAccounts: OzonAccount[];
 }

@@ -137,10 +137,36 @@ const SettingsPage: React.FC = () => {
       {/* СЕКЦИЯ: МАГАЗИНЫ */}
       <Divider>🛍️ Магазины</Divider>
       
-      <Card type="inner" title="Wildberries" size="small" style={{marginBottom: 16}}>
-        <Form.Item label="API Ключ (Токены 'Стандартный')" name={['ApiKeys', 'Wildberries']}>
-            <Input.Password placeholder="eyJh..." />
-        </Form.Item>
+      <Card type="inner" title="Wildberries (Мульти-аккаунт)" size="small" style={{marginBottom: 16}}>
+        <Form.List name={['ApiKeys', 'WildberriesAccounts']}>
+          {(fields, { add, remove }) => (
+            <>
+              {fields.map(({ key, name, ...restField }) => (
+                <Row key={key} gutter={[8, 8]} align="bottom" style={{ marginBottom: 16, borderBottom: '1px solid #f0f0f0', paddingBottom: 16 }}>
+                  <Col xs={22} md={22}>
+                    <Form.Item
+                      {...restField}
+                      name={[name, 'Token']}
+                      label="API Token (Стандартный)"
+                      style={{ marginBottom: 0 }}
+                      rules={[{ required: true, message: 'Required' }]}
+                    >
+                      <Input.Password placeholder="eyJh..." />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={2} md={2} style={{ display: 'flex', justifyContent: 'center' }}>
+                    <Button type="text" danger icon={<DeleteOutlined />} onClick={() => remove(name)} />
+                  </Col>
+                </Row>
+              ))}
+              <Form.Item style={{ marginTop: 16, marginBottom: 0 }}>
+                <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
+                  Добавить магазин Wildberries
+                </Button>
+              </Form.Item>
+            </>
+          )}
+        </Form.List>
       </Card>
 
       <Card type="inner" title="Ozon (Мульти-аккаунт)" size="small">
