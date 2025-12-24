@@ -36,7 +36,7 @@ namespace Marketplace.API.DTOs
         [JsonPropertyName("createdDate")]
         public DateTime CreatedDate { get; set; }
 
-        [JsonPropertyName("valuation")]
+        [JsonPropertyName("productValuation")]
         public int Valuation { get; set; } // Рейтинг (звезды)
 
         [JsonPropertyName("userName")]
