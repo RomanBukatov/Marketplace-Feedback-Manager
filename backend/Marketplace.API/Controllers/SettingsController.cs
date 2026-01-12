@@ -64,7 +64,15 @@ namespace Marketplace.API.Controllers
             // 4. Сохраняем обратно
             var options = new JsonSerializerOptions { WriteIndented = true };
             await System.IO.File.WriteAllTextAsync(configPath, currentNode.ToJsonString(options));
-
+            
+            // ПРИНУДИТЕЛЬНОЕ ОБНОВЛЕНИЕ КОНФИГУРАЦИИ
+            // Это заставляет приложение перечитать файл appsettings.json с диска,
+            // даже если Docker не прислал уведомление об изменении файла.
+            if (_configuration is IConfigurationRoot configRoot)
+            {
+                configRoot.Reload();
+            }
+            
             return Ok(new { message = "Settings updated successfully." });
         }
     }
